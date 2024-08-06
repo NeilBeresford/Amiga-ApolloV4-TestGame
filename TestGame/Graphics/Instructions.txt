@@ -1,0 +1,23 @@
+The following utils are needed, and these should be copied into C:
+
+  showchunkyraw
+  pconv2raw
+
+Example -
+
+  commands
+  Disk1:Sources/ApolloGames/TestGame/Graphics/
+
+
+
+  # Convert the png to raw image
+  pconv2raw Sprite-Player.png 8
+  pconv2raw Invaders.png 8
+  pconv2raw InvSprites.png 8
+
+  # Shows the raw block, using the correct palette
+  showchunkyraw Sprite-Player.png.raw 32 32 lut8 Sprite-Player.png.RAW.pal
+  showchunkyraw Invaders.png.raw 320 256 lut8 Invaders.png.raw.pal
+  showchunkyraw InvSprites.png.raw 208 179 lut8 InvSprites.png.raw.pal
+
+
