@@ -1,4 +1,5 @@
-;APS00001AAD00001AAD00001AAD00001AAD00001AAD00001AAD00001AAD00001AAD00001AAD00001AAD
+;APS00001B7100001B7100001B7100001B7100001B7100001B7100001B7100001B7100001B7100001B71
+;--T---T---T---T---T---T---T---T---T---T---T---T---T---T---T---T---T---T---T---T---T---T---T---T---T---T---T---T---T---T---T---T---T---T
 ;-----------------------------------------------------------------------------
 ;	Project		Apollo V4 development - testGame
 ;	File		SceneGame.s
@@ -26,19 +27,19 @@
 ;-----------------------------------------------------------------------------
 
 
-SG_ID		= $ABCD0002
+SG_ID    = $ABCD0002
 
-SGINIT		= $00
-SGSCROLL	= $01
-SGINVON		= $02
-SGIMESS		= $02
-SGIWAIT		= $03
+SGINIT   = $00
+SGSCROLL = $01
+SGINVON  = $02
+SGIMESS  = $02
+SGIWAIT  = $03
 
 ;-----------------------------------------------------------------------------
 ; Code
 ;-----------------------------------------------------------------------------
 
-	SECTION	SICode,CODE_F
+  SECTION    SICode,CODE_F
 
 
 ;----------------------------------------------------------
@@ -47,17 +48,17 @@ SGIWAIT		= $03
 ;----------------------------------------------------------
 SceneGame_Add:
 
-	movem.l	a0,-(SP)
+  movem.l    a0,-(a7)
 
-	lea	SceneGameStruct,a0
+  lea        SceneGameStruct,a0
 
-	move.l	#0,SDINIT(a0)
-	move.l	#SGINIT,SDState(a0)
+  move.l     #0,SDINIT(a0)
+  move.l     #SGINIT,SDState(a0)
 	
-	jsr	CGC_AddScene
+  jsr        CGC_AddScene
 
-	movem.l	(SP)+,a0
-	rts
+  movem.l    (a7)+,a0
+  rts
 
 ;----------------------------------------------------------
 ; SceneGame_Init
@@ -67,20 +68,21 @@ SceneGame_Add:
 ;----------------------------------------------------------
 SceneGame_Init:
 
-	movem.l	d0-a6,-(SP)
+  movem.l  d0-a6,-(a7)
 
-	move.l	#1,SDINIT(a0)
-	move.l	#SGSCROLL,SDState(a0)
+  	move.l  #1,SDINIT(a0)
+  	move.l  #SGSCROLL,SDState(a0)
 
 	; Game Init
-	 
-	jsr	GPlayer_Init		; Init the player
-	jsr	GI_Init			; Invaders setup
-	jsr	GB_Init			; Bullet control setup
 
-	movem.l	(SP)+,d0-a6
+	jsr		Starfield_Init 
+  	jsr     GPlayer_Init              ; Init the player
+  	jsr     GI_Init                   ; Invaders setup
+  	jsr     GB_Init                   ; Bullet control setup
 
-	rts
+  	movem.l (a7)+,d0-a6
+
+  rts
 
 ;----------------------------------------------------------
 ; SceneGame_Update
@@ -90,35 +92,36 @@ SceneGame_Init:
 ;----------------------------------------------------------
 SceneGame_Update:
 
-	movem.l	d0-a6,-(SP)
+  movem.l    d0-a6,-(a7)
 
 	;cmp.l	#1,SDINIT(a0)
 	;bne.s	.end
 	;cmp.l	#SG_ID,SDID(a0)
 	;bne.s	.end
 
-	jsr	READKEY			; ESC returns to intro
-	cmp.b	#$45,D0
-	bne.b	.continue
+  jsr        READKEY                   ; ESC returns to intro
+  cmp.b      #$45,D0
+  bne.b      .continue
 
 
-	jsr	SceneIntro_Add
-	move.l	#KEYDELAY1SEC,KeyDelay
-	jmp	.end
+  jsr        SceneIntro_Add
+  move.l     #KEYDELAY1SEC,KeyDelay
+  jmp        .end
 	
 .continue:
 
 	; logic update
-	
-	jsr	GPlayer_Update		; Control for player
-	jsr	GI_Update		; Invader control
-	jsr	GB_Update		; Bullet control
+
+	jsr		Starfield_Update	
+  jsr      GPlayer_Update            ; Control for player
+  jsr      GI_Update                 ; Invader control
+  jsr      GB_Update                 ; Bullet control
 
 
 .end:
-	movem.l	(SP)+,d0-a6 
+  movem.l  (a7)+,d0-a6 
 
-	rts
+  rts
 
 ;----------------------------------------------------------
 ; SceneGame_Draw
@@ -128,7 +131,7 @@ SceneGame_Update:
 ;----------------------------------------------------------
 SceneGame_Draw:
 
-	movem.l	d0-a6,-(SP)
+  movem.l    d0-a6,-(a7)
 	
 	;cmp.l	#1,SDINIT(a0)
 	;bne.s	.end
@@ -137,41 +140,42 @@ SceneGame_Draw:
 
 	; background
 
-	lea	BackgroundImage,a1	; Old invaders image
-	jsr	DrawImage
-			
+  ;lea        BackgroundImage,a1        ; Old invaders image
+  ;jsr        DrawImage
+	jsr		ClearScreen
+	jsr		Starfield_Draw		
 
 	; Top score and lives
 	
-	move.l	#8,d0			; X pos
-	move.l	#2,d1			; Y pos
-	lea	StrTest,a0		; String to display
-	jsr	DisplayString
+  move.l     #8,d0                     ; X pos
+  move.l     #2,d1                     ; Y pos
+  lea        StrTest,a0                ; String to display
+  jsr        DisplayString
 
 
-	jsr	GB_Draw			; the bullets
-	jsr	GI_Draw			; the invaders	
+  jsr        GB_Draw                   ; the bullets
+  jsr        GI_Draw                   ; the invaders	
 	
 
 	; the four bases
 
-	move.l	#54,d0
-	move.l	#194,d1
-	move.l	#4,d2
-	move.l	#3,d7
+  move.l     #54,d0
+  move.l     #194,d1
+  move.l     #4,d2
+  move.l     #3,d7
 .bases:
-	jsr	DrawInvSprite
-	add	#60,d0
-	dbf	d7,.bases
+  jsr        DrawInvSprite
+  add        #60,d0
+  dbf        d7,.bases
 
 	; the player
 
-	jsr	GPlayer_Draw
+  jsr        GPlayer_Draw
 
 .end:
 			
-	movem.l	(SP)+,d0-a6
-	rts
+  movem.l    (a7)+,d0-a6
+  rts
 
 ;----------------------------------------------------------
 ; SceneGame_Exit
@@ -182,28 +186,28 @@ SceneGame_Draw:
 SceneGame_Exit:
 
 
-	rts
+  rts
 
 
 ;-----------------------------------------------------------------------------
 ; Data
 ;-----------------------------------------------------------------------------
 
-	SECTION SIData,DATA_F
+  SECTION    SIData,DATA_F
 
 ; Scene Control Struct
 
-	EVEN
+  EVEN
 
 SceneGameStruct:
 
-	dc.l	0			; Initialized
-	dc.l	SG_ID			; ID
-	dc.l	0			; State	
-	dc.l	SceneGame_Init		; Init function
-	dc.l	SceneGame_Update	; Update function
-	dc.l	SceneGame_Draw		; Draw function
-	dc.l	SceneGame_Exit		; Exit function
+  dc.l       0                         ; Initialized
+  dc.l       SG_ID                     ; ID
+  dc.l       0                         ; State	
+  dc.l       SceneGame_Init            ; Init function
+  dc.l       SceneGame_Update          ; Update function
+  dc.l       SceneGame_Draw            ; Draw function
+  dc.l       SceneGame_Exit            ; Exit function
 
 ; 
 
