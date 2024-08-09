@@ -1,4 +1,5 @@
-;APS0000277A0000277A0000277A0000277A0000277A0000277A0000277A0000277A0000277A0000277A
+;APS000027D4000027D4000027D4000027D4000027D4000027D4000027D4000027D4000027D4000027D4
+;---T---T---T---T---T---T---T---T---T---T---T---T---T---T---T---T---T---T---T---T---T---T---T---T---T---T---T---T---T---T---T---T---T---T
 ;-----------------------------------------------------------------------------
 ;	Project		Apollo V4 development - testGame
 ;	File		SceneIntro.s
@@ -26,19 +27,19 @@
 ;-----------------------------------------------------------------------------
 
 
-SI_ID		= $ABCD0001
+SI_ID    = $ABCD0001
 
-SIINIT		= $00
-SISCROLL	= $01
-SIINVON		= $02
-SIMESS		= $02
-SIWAIT		= $03
+SIINIT   = $00
+SISCROLL = $01
+SIINVON  = $02
+SIMESS   = $02
+SIWAIT   = $03
 
 ;-----------------------------------------------------------------------------
 ; Code
 ;-----------------------------------------------------------------------------
 
-	SECTION	SICode,CODE_F
+          SECTION    SICode,CODE_F
 
 
 ;----------------------------------------------------------
@@ -47,17 +48,16 @@ SIWAIT		= $03
 ;----------------------------------------------------------
 SceneIntro_Add:
 
-	movem.l	a0,-(SP)
+    movem.l    a0,-(a7)
 
-	lea	SceneIntroStruct,a0
+    lea        SceneIntroStruct,a0
 
-	move.l	#0,SDINIT(a0)
-	move.l	#SIINIT,SDState(a0)
-	
-	jsr	CGC_AddScene
+    move.l     #0,SDINIT(a0)
+    move.l     #SIINIT,SDState(a0)
+	jsr        CGC_AddScene
 
-	movem.l	(SP)+,a0
-	rts
+    movem.l    (a7)+,a0
+    rts
 
 ;----------------------------------------------------------
 ; SceneIntro_Init
@@ -67,9 +67,14 @@ SceneIntro_Add:
 ;----------------------------------------------------------
 SceneIntro_Init:
 
-	move.l	#1,SDINIT(a0)
-	move.l	#SISCROLL,SDState(a0)
-	rts
+    move.l  #1,SDINIT(a0)
+    move.l  #SISCROLL,SDState(a0)
+
+    movem.l d0-d2/a0,-(a7)
+    jsr     Starfield_Init
+    movem.l (a7)+,d0-d2/a0
+
+    rts
 
 ;----------------------------------------------------------
 ; SceneIntro_Update
@@ -79,27 +84,22 @@ SceneIntro_Init:
 ;----------------------------------------------------------
 SceneIntro_Update:
 
-	movem.l	d0-d2,-(SP)
+    movem.l d0-d2,-(a7)
 
-	;cmp.l	#1,SDINIT(a0)
-	;bne.s	.end
-	;cmp.l	#SI_ID,SDID(a0)
-	;bne.s	.end
-
+    jsr     Starfield_Update
 
 	; check for fire button press
-	btst	#1,$DFF221		; fire 1
-	beq.w	.end
-
+    btst    #1,$DFF221                                        ; fire 1
+    beq.w   .end
 
 	; change scene...
-	jsr SceneGame_Add
+    jsr     SceneGame_Add
 	
-
 .end:
-	movem.l	(SP)+,d0-d2 
 
-	rts
+    movem.l (a7)+,d0-d2 
+
+    rts
 
 ;----------------------------------------------------------
 ; SceneIntro_Draw
@@ -109,26 +109,20 @@ SceneIntro_Update:
 ;----------------------------------------------------------
 SceneIntro_Draw:
 
-	movem.l	a0-a1,-(SP)
-	
+    movem.l d0-d7/a0,-(a7)
 
 	; Background
-
-	lea	BackgroundImage,a1	; Old invaders image
-	jsr	DrawImage
+    jsr    ClearScreen
+    jsr    Starfield_Draw
 
 	; Text on screen
-
-	clr.l	d0
-	clr.l	d1
-	lea	SI_Title,a0
-	jsr	DisplayString
-	
-
-.end:
+    clr.l   d0
+    clr.l   d1
+    lea     SI_Title,a0
+    jsr     DisplayString
 			
-	movem.l	(SP)+,a0-a1
-	rts
+    movem.l (a7)+,d0-d7/a0
+    rts
 
 ;----------------------------------------------------------
 ; SceneIntro_Exit
@@ -139,39 +133,40 @@ SceneIntro_Draw:
 SceneIntro_Exit:
 
 
-	rts
+    rts
 
 
 ;-----------------------------------------------------------------------------
 ; Data
 ;-----------------------------------------------------------------------------
 
-	SECTION SIData,DATA_F
+    SECTION    SIData,DATA_F
 
 ; Scene Control Struct
 
 SceneIntroStruct:
 
-	dc.l	0			; Initialized
-	dc.l	SI_ID			; ID
-	dc.l	0			; State	
-	dc.l	SceneIntro_Init		; Init function
-	dc.l	SceneIntro_Update	; Update function
-	dc.l	SceneIntro_Draw		; Draw function
-	dc.l	SceneIntro_Exit		; Exit function
+    dc.l    0                                                 ; Initialized
+    dc.l    SI_ID                                             ; ID
+    dc.l    0                                                 ; State	
+    dc.l    SceneIntro_Init                                   ; Init function
+    dc.l    SceneIntro_Update                                 ; Update function
+    dc.l    SceneIntro_Draw                                   ; Draw function
+    dc.l    SceneIntro_Exit                                   ; Exit function
 
 ; Text for the intro ...
 
-SI_Title	dc.b FPOS,3,2, FCOL,55,FINV," SPACE INVADERS ",FINV
-		dc.b FPOS,3,4, FCOL,56,"BY NEIL BERESFORD"
-		dc.b FPOS,6,12,FCOL, 5,"START GAME  PRESS FIRE"
-		dc.b FPOS,6,14,FCOL, 5,"QUIT GAME   PRESS ESC"
-		dc.b FPOS,3,30,FCOL,55,"PLEASE NOTE, JOYSTICK ONLY"
-		dc.b 0
+SI_Title:
+    dc.b    FPOS,3,2, FCOL,55,FINV," SPACE INVADERS ",FINV
+    dc.b    FPOS,3,4, FCOL,56,"BY NEIL BERESFORD"
+    dc.b    FPOS,6,12,FCOL, 5,"START GAME  PRESS FIRE"
+    dc.b    FPOS,6,14,FCOL, 5,"QUIT GAME   PRESS ESC"
+    dc.b    FPOS,3,30,FCOL,55,"PLEASE NOTE, JOYSTICK ONLY"
+    dc.b    0
 			 
 
 
-	EVEN
+    EVEN
 
 ;-----------------------------------------------------------------------------
 ; End of file: SceneIntro.s
